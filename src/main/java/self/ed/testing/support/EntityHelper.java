@@ -43,19 +43,19 @@ public class EntityHelper {
     public <T> T create(Class<T> clazz, Consumer<T> callback) {
         T entity = random(clazz, getIdFieldName(clazz));
         callback.accept(entity);
-        persist(entity);
+        entityManager.persist(entity);
         return entity;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T find(T entity, String... lazyFieldsToInitialize) {
+        return find((Class<T>) entity.getClass(), getId(entity), lazyFieldsToInitialize);
     }
 
     public <T> T find(Class<T> clazz, Object id, String... lazyFieldsToInitialize) {
         T entity = entityManager.find(clazz, id);
         initializeLazyFields(entity, lazyFieldsToInitialize);
         return entity;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T find(T entity) {
-        return find((Class<T>) entity.getClass(), getId(entity));
     }
 
     public <T> List<T> findAll(Class<T> clazz) {
@@ -87,15 +87,6 @@ public class EntityHelper {
         entityManager.merge(entity);
     }
 
-    public void refresh(Object entity, String... lazyFieldsToInitialize) {
-        entityManager.refresh(entity);
-        initializeLazyFields(entity, lazyFieldsToInitialize);
-    }
-
-    private void persist(Object entity) {
-        entityManager.persist(entity);
-    }
-
     private Object getId(Object entity) {
         return entityManagerFactory.getPersistenceUnitUtil().getIdentifier(entity);
     }
@@ -113,19 +104,26 @@ public class EntityHelper {
 
     private void initializeLazyFields(Object entity, String... lazyFieldsToInitialize) {
         if (entity != null) {
-            asList(lazyFieldsToInitialize).forEach(field -> initialize(getField(entity, field)));
+            asList(lazyFieldsToInitialize).forEach(field -> initialize(getFieldValue(entity, field)));
         }
     }
 
     private static void initialize(Object lazyField) {
-        // TODO: implement
+        // With Hibernate it would be a peace of cake!
+        if (Iterable.class.isInstance(lazyField)) {
+            Iterable.class.cast(lazyField).iterator();
+        } else if (Map.class.isInstance(lazyField)) {
+            Map.class.cast(lazyField).size();
+        } else if (lazyField != null) {
+            throw new IllegalArgumentException("Don't know how to initialize " + lazyField);
+        }
     }
 
-    private Object getField(Object entity, String field) {
+    private Object getFieldValue(Object entity, String field) {
         try {
             return readField(entity, field, true);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
