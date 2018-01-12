@@ -19,9 +19,9 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
+import java.util.List;
 
 import static javax.persistence.criteria.JoinType.INNER;
-import static org.hibernate.criterion.Projections.countDistinct;
 import static org.hibernate.criterion.Restrictions.eq;
 import static org.hibernate.sql.JoinType.INNER_JOIN;
 import static org.junit.Assert.assertEquals;
@@ -46,27 +46,27 @@ public class HibernateBugTest {
         Post post = entityFactory.createPost(user);
         Comment comment = entityFactory.createComment(user);
 
-        long usersCount = entityManager.createQuery("select count(distinct u.id) from User u " +
+        List users = entityManager.createQuery("from User u " +
                 // Switching the order of the joins does not affect the result, which is good!
                 "join u.posts p on p.body = :postBody " +
                 "join u.comments c on c.body = :commentBody " +
-                "", Long.class)
+                "")
                 .setParameter("postBody", post.getBody())
                 .setParameter("commentBody", comment.getBody())
-                .getSingleResult();
+                .getResultList();
 
-        assertEquals(1L, usersCount);
+        assertEquals(1, users.size());
     }
 
     @Test
     @Transactional
-    public void testOrderOfMultipleJoinsWithOnClause_HibernateEntityManager_NoBug() {
+    public void testOrderOfMultipleJoinsWithOnClause_CriteriaBuilder_NoBug() {
         User user = entityFactory.createUser();
         Post post = entityFactory.createPost(user);
         Comment comment = entityFactory.createComment(user);
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        CriteriaQuery<User> cq = cb.createQuery(User.class);
         Root<User> rootUser = cq.from(User.class);
 
         // Switching the order of the joins does not affect the result, which is good!
@@ -76,10 +76,9 @@ public class HibernateBugTest {
         Join<User, Comment> joinUserComment = rootUser.join("comments", INNER);
         joinUserComment.on(cb.equal(joinUserComment.get("body"), comment.getBody()));
 
-        CriteriaQuery<Long> query = cq.select(cb.countDistinct(rootUser.get("id")));
-        long usersCount = entityManager.createQuery(query).getSingleResult();
+        List<User> users = entityManager.createQuery(cq.select(rootUser)).getResultList();
 
-        assertEquals(1L, usersCount);
+        assertEquals(1, users.size());
     }
 
     @Test
@@ -90,33 +89,32 @@ public class HibernateBugTest {
         Comment comment = entityFactory.createComment(user);
 
         Session session = (Session) entityManager.getDelegate();
-        long usersCount = (long) session.createQuery("select count(distinct u.id) from User u " +
+        List users = session.createQuery("from User u " +
                 // Switching the order of the joins does not affect the result, which is good!
                 "join u.posts p on p.body = :postBody " +
                 "join u.comments c on c.body = :commentBody " +
                 "")
                 .setParameter("postBody", post.getBody())
                 .setParameter("commentBody", comment.getBody())
-                .uniqueResult();
+                .list();
 
-        assertEquals(1L, usersCount);
+        assertEquals(1, users.size());
     }
 
     @Test
     @Transactional
-    public void testOrderOfMultipleJoinsWithOnClause_HibernateSession_Bug() {
+    public void testOrderOfMultipleJoinsWithOnClause_Criteria_Bug() {
         User user = entityFactory.createUser();
         Post post = entityFactory.createPost(user);
         Comment comment = entityFactory.createComment(user);
 
         Session session = (Session) entityManager.getDelegate();
-        long usersCount = (long) session.createCriteria(User.class, "u")
+        List users = session.createCriteria(User.class, "u")
                 // Switching the order of the joins breaks the result, which is a bug in Hibernate!
                 .createAlias("u.comments", "c", INNER_JOIN, eq("c.body", comment.getBody()))
                 .createAlias("u.posts", "p", INNER_JOIN, eq("p.body", post.getBody()))
-                .setProjection(countDistinct("u.id"))
-                .uniqueResult();
+                .list();
 
-        assertEquals(1L, usersCount);
+        assertEquals(1, users.size());
     }
 }
