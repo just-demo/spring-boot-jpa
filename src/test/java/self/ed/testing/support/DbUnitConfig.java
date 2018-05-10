@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 
+//TODO: remove
 @Configuration
 public class DbUnitConfig {
     @Bean
@@ -17,7 +18,7 @@ public class DbUnitConfig {
         return config;
     }
 
-    @Bean
+    //@Bean
     public DatabaseDataSourceConnectionFactoryBean dbUnitDatabaseConnection(DataSource dataSource, DatabaseConfigBean dbUnitDatabaseConfig) {
         DatabaseDataSourceConnectionFactoryBean connection = new DatabaseDataSourceConnectionFactoryBean(dataSource);
         connection.setDatabaseConfig(dbUnitDatabaseConfig);

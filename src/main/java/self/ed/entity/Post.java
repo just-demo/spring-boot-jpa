@@ -9,7 +9,7 @@ import java.util.Objects;
 
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
-import static javax.persistence.GenerationType.IDENTITY;
+import static javax.persistence.GenerationType.SEQUENCE;
 
 /**
  * @author Anatolii
@@ -17,7 +17,8 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity
 public class Post {
     @Id
-    @GeneratedValue(strategy = IDENTITY)
+    @GeneratedValue(strategy = SEQUENCE, generator = "post_id_seq")
+    @SequenceGenerator(name = "post_id_seq", sequenceName = "post_id_seq")
     private Long id;
 
     private String title;

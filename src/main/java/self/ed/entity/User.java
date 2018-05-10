@@ -10,18 +10,18 @@ import java.util.Objects;
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
 import static javax.persistence.GenerationType.IDENTITY;
+import static javax.persistence.GenerationType.SEQUENCE;
 
 /**
  * @author Anatolii
  */
 @Entity
-// TODO: fix it for PostqreSQL without breaking DbUnit tests
-//@Table(name = "`user`")
-@Table(name = "\"user\"")
-//@Table(name = "user")
 public class User {
     @Id
-    @GeneratedValue(strategy = IDENTITY)
+    // Cannot use IDENTITY because of quoted "user": PostgreSQL would try to use an incorrect
+    // sequence name "user"_"id"_seq when identifiers are quoted either globally or locally
+    @GeneratedValue(strategy = SEQUENCE, generator = "user_id_seq")
+    @SequenceGenerator(name = "user_id_seq", sequenceName = "user_id_seq")
     private Long id;
     private String name;
 

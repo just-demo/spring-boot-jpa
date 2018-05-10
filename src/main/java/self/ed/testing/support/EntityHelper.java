@@ -1,6 +1,5 @@
 package self.ed.testing.support;
 
-import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +30,6 @@ public class EntityHelper {
 
     @Autowired
     private EntityManagerFactory entityManagerFactory;
-
-    private SessionFactory sessionFactory;
 
     public <T> T create(Class<T> clazz) {
         return create(clazz, e -> {

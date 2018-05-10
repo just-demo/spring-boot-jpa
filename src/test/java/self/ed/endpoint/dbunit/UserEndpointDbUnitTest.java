@@ -29,6 +29,7 @@ import static org.springframework.http.HttpStatus.OK;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class})
+@DatabaseSetup(value = "user.empty.xml")
 public class UserEndpointDbUnitTest {
     private static final String PATH_USERS = "/rest/users";
     private static final String PATH_USER = "/rest/users/{id}";
@@ -60,7 +61,6 @@ public class UserEndpointDbUnitTest {
     }
 
     @Test
-    @DatabaseSetup(value = "user.empty.xml")
     @ExpectedDatabase(value = "user.single.xml", table = "user", assertionMode = NON_STRICT)
     public void testCreate() {
         User user = new User();

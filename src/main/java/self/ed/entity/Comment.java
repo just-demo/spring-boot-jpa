@@ -5,7 +5,7 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import javax.persistence.*;
 import java.util.Objects;
 
-import static javax.persistence.GenerationType.IDENTITY;
+import static javax.persistence.GenerationType.SEQUENCE;
 
 /**
  * @author Anatolii
@@ -13,7 +13,8 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity
 public class Comment {
     @Id
-    @GeneratedValue(strategy = IDENTITY)
+    @GeneratedValue(strategy = SEQUENCE, generator = "comment_id_seq")
+    @SequenceGenerator(name = "comment_id_seq", sequenceName = "comment_id_seq")
     private Long id;
 
     private String body;
