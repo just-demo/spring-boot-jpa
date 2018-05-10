@@ -5,13 +5,15 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import javax.persistence.*;
 import java.util.Objects;
 
+import static javax.persistence.GenerationType.IDENTITY;
+
 /**
  * @author Anatolii
  */
 @Entity
 public class Comment {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     private String body;

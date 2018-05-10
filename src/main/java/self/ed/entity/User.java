@@ -3,15 +3,13 @@ package self.ed.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.List;
 import java.util.Objects;
 
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
+import static javax.persistence.GenerationType.IDENTITY;
 
 /**
  * @author Anatolii
@@ -19,9 +17,11 @@ import static javax.persistence.FetchType.LAZY;
 @Entity
 // TODO: fix it for PostqreSQL without breaking DbUnit tests
 //@Table(name = "`user`")
+@Table(name = "\"user\"")
+//@Table(name = "user")
 public class User {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
     private String name;
 

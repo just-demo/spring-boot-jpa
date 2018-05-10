@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
+import static javax.persistence.GenerationType.IDENTITY;
 
 /**
  * @author Anatolii
@@ -16,7 +17,7 @@ import static javax.persistence.FetchType.LAZY;
 @Entity
 public class Post {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     private String title;

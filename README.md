@@ -3,13 +3,13 @@ drop table post;
 drop table comment;
 
 create table "user" (
-	id bigint not null,
+	id bigserial not null,
 	"name" varchar(255),
 	constraint pk_user primary key (id)
 );
 
 create table post (
-	id bigint not null,
+	id bigserial not null,
 	title varchar(255),
 	body varchar(255),
 	user_id bigint,
@@ -17,7 +17,7 @@ create table post (
 );
 
 create table comment (
-	id bigint not null,
+	id bigserial not null,
 	body varchar(255),
 	post_id bigint,
 	user_id bigint,
