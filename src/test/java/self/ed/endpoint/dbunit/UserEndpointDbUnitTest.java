@@ -2,7 +2,6 @@ package self.ed.endpoint.dbunit;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
-import com.github.springtestdbunit.annotation.DatabaseTearDown;
 import com.github.springtestdbunit.annotation.ExpectedDatabase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +17,6 @@ import self.ed.testing.support.EntityHelper;
 
 import java.util.List;
 
-import static com.github.springtestdbunit.annotation.DatabaseOperation.DELETE_ALL;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
@@ -42,7 +40,6 @@ public class UserEndpointDbUnitTest {
     @Test
     @DatabaseSetup("users.xml")
     @ExpectedDatabase(value = "users.xml", table = "user")
-    @DatabaseTearDown(type = DELETE_ALL)
     public void testFindAll() {
         ResponseEntity<User[]> entity = restTemplate.getForEntity(PATH_USERS, User[].class);
 

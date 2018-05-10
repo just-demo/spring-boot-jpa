@@ -17,6 +17,8 @@ import static javax.persistence.FetchType.LAZY;
  * @author Anatolii
  */
 @Entity
+// TODO: fix it for PostqreSQL without breaking DbUnit tests
+//@Table(name = "`user`")
 public class User {
     @Id
     @GeneratedValue
