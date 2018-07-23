@@ -9,12 +9,12 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.reflect.FieldUtils.readField;
 import static self.ed.testing.support.RandomUtils.random;
 
@@ -63,10 +63,7 @@ public class EntityHelper {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(clazz);
         Root<T> rootEntity = query.from(clazz);
-        Predicate[] restrictions = whereParams.entrySet().stream()
-                .map(entry -> equalOrIsNull(cb, rootEntity.get(entry.getKey()), entry.getValue()))
-                .toArray(Predicate[]::new);
-        query.select(rootEntity).where(cb.and(restrictions));
+        query.select(rootEntity).where(buildWhereClause(cb, rootEntity, whereParams));
         List<T> resultList = entityManager.createQuery(query).getResultList();
         resultList.forEach(entity -> initializeLazyFields(entity, lazyFieldsToInitialize));
         return resultList;
@@ -77,7 +74,20 @@ public class EntityHelper {
     }
 
     public void removeAll(Class<?> clazz) {
-        entityManager.createQuery("delete from " + clazz.getName()).executeUpdate();
+        removeAll(clazz, emptyMap());
+    }
+
+    public <T> void removeAll(Class<T> clazz, Map<String, Object> whereParams) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaDelete<T> criteriaDelete = cb.createCriteriaDelete(clazz);
+        Root<T> rootDelete = criteriaDelete.from(clazz);
+        // Using subquery to support nested keys in where conditions like "fieldOne.fieldTwo.fieldThree" = "valueThree",
+        // which result in cross joins not supported by delete statement itself
+        Subquery<T> subquery = criteriaDelete.subquery(clazz);
+        Root<T> rootSubquery = subquery.from(clazz);
+        subquery.select(rootSubquery).where(buildWhereClause(cb, rootSubquery, whereParams));
+        criteriaDelete.where(cb.in(rootDelete).value(subquery));
+        entityManager.createQuery(criteriaDelete).executeUpdate();
     }
 
     public void merge(Object entity) {
@@ -116,6 +126,22 @@ public class EntityHelper {
         }
     }
 
+    private Expression<Boolean> buildWhereClause(CriteriaBuilder criteriaBuilder, Root<?> rootEntity, Map<String, Object> whereParams) {
+        Predicate[] restrictions = whereParams.entrySet().stream()
+                .map(entry -> {
+                    Path<?> key = rootEntity;
+                    for (String fieldName : entry.getKey().split("\\.")) {
+                        key = key.get(fieldName);
+                    }
+                    Object value = entry.getValue();
+                    return Collection.class.isInstance(value) ?
+                            inOrIsNull(criteriaBuilder, key, Collection.class.cast(value)) :
+                            equalOrIsNull(criteriaBuilder, key, value);
+                })
+                .toArray(Predicate[]::new);
+        return criteriaBuilder.and(restrictions);
+    }
+
     private Object getFieldValue(Object entity, String field) {
         try {
             return readField(entity, field, true);
@@ -124,7 +150,27 @@ public class EntityHelper {
         }
     }
 
-    private static Predicate equalOrIsNull(CriteriaBuilder cb, Expression<?> expression, Object value) {
+    private Predicate equalOrIsNull(CriteriaBuilder cb, Expression<?> expression, Object value) {
         return value == null ? cb.isNull(expression) : cb.equal(expression, value);
+    }
+
+    private Predicate inOrIsNull(CriteriaBuilder criteriaBuilder, Expression<?> expression, Collection<?> values) {
+        // A tiny optimization for common scenarios
+        if (values.size() == 1) {
+            return equalOrIsNull(criteriaBuilder, expression, values.iterator().next());
+        }
+
+        List<Predicate> predicates = new ArrayList<>();
+        Collection<Object> nonNullValues = values.stream().filter(Objects::nonNull).collect(toList());
+        if (nonNullValues.size() != values.size()) {
+            predicates.add(criteriaBuilder.isNull(expression));
+        }
+
+        if (!nonNullValues.isEmpty()) {
+            predicates.add(expression.in(nonNullValues));
+        }
+
+        // Zero predicates will always result to false
+        return criteriaBuilder.or(predicates.toArray(new Predicate[0]));
     }
 }
