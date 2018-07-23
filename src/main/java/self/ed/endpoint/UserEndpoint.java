@@ -31,7 +31,7 @@ public class UserEndpoint {
     @Path("/{id}")
     @Produces(APPLICATION_JSON)
     public Response get(@PathParam("id") Long id) {
-        User user = userRepository.findOne(id);
+        User user = userRepository.findById(id).orElse(null);
         if (user == null) {
             return Response.status(NOT_FOUND).build();
         }
@@ -52,7 +52,7 @@ public class UserEndpoint {
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     public Response update(@PathParam("id") Long id, User user) {
-        if (!userRepository.exists(id)) {
+        if (!userRepository.existsById(id)) {
             return Response.status(NOT_FOUND).build();
         }
         user.setId(id);
@@ -63,10 +63,10 @@ public class UserEndpoint {
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
-        if (!userRepository.exists(id)) {
+        if (!userRepository.existsById(id)) {
             return Response.status(NOT_FOUND).build();
         }
-        userRepository.delete(id);
+        userRepository.deleteById(id);
         return Response.status(NO_CONTENT).build();
     }
 }

@@ -31,7 +31,7 @@ public class CommentEndpoint {
     @Path("/{id}")
     @Produces(APPLICATION_JSON)
     public Response get(@PathParam("id") Long id) {
-        Comment comment = commentRepository.findOne(id);
+        Comment comment = commentRepository.findById(id).orElse(null);
         if (comment == null) {
             return Response.status(NOT_FOUND).build();
         }
@@ -52,7 +52,7 @@ public class CommentEndpoint {
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     public Response update(@PathParam("id") Long id, Comment comment) {
-        if (!commentRepository.exists(id)) {
+        if (!commentRepository.existsById(id)) {
             return Response.status(NOT_FOUND).build();
         }
         comment.setId(id);
@@ -63,10 +63,10 @@ public class CommentEndpoint {
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
-        if (!commentRepository.exists(id)) {
+        if (!commentRepository.existsById(id)) {
             return Response.status(NOT_FOUND).build();
         }
-        commentRepository.delete(id);
+        commentRepository.deleteById(id);
         return Response.status(NO_CONTENT).build();
     }
 }

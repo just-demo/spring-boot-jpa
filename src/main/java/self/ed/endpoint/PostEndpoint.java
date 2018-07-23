@@ -33,7 +33,7 @@ public class PostEndpoint {
     @Path("/{id}")
     @Produces(APPLICATION_JSON)
     public Response get(@PathParam("id") Long id) {
-        Post post = postRepository.findOne(id);
+        Post post = postRepository.findById(id).orElse(null);
         if (post == null) {
             return Response.status(NOT_FOUND).build();
         }
@@ -54,7 +54,7 @@ public class PostEndpoint {
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     public Response update(@PathParam("id") Long id, Post post) {
-        Post existingPost = postRepository.findOne(id);
+        Post existingPost = postRepository.findById(id).orElse(null);
         if (existingPost == null) {
             return Response.status(NOT_FOUND).build();
         }
@@ -71,10 +71,10 @@ public class PostEndpoint {
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {
-        if (!postRepository.exists(id)) {
+        if (!postRepository.existsById(id)) {
             return Response.status(NOT_FOUND).build();
         }
-        postRepository.delete(id);
+        postRepository.deleteById(id);
         return Response.status(NO_CONTENT).build();
     }
 
