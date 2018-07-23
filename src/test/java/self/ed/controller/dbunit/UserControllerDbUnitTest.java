@@ -1,4 +1,4 @@
-package self.ed.endpoint.dbunit;
+package self.ed.controller.dbunit;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -30,9 +30,9 @@ import static org.springframework.http.HttpStatus.OK;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class})
 @DatabaseSetup(value = "user.empty.xml")
-public class UserEndpointDbUnitTest {
-    private static final String PATH_USERS = "/rest/users";
-    private static final String PATH_USER = "/rest/users/{id}";
+public class UserControllerDbUnitTest {
+    private static final String PATH_USERS = "/users";
+    private static final String PATH_USER = "/users/{id}";
 
     @Autowired
     private TestRestTemplate restTemplate;

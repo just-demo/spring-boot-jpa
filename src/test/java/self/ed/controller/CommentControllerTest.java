@@ -1,4 +1,4 @@
-package self.ed.endpoint;
+package self.ed.controller;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,9 +28,9 @@ import static self.ed.testing.support.RandomUtils.random;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class CommentEndpointTest {
-    private static final String PATH_COMMENTS = "/rest/comments";
-    private static final String PATH_COMMENT = "/rest/comments/{id}";
+public class CommentControllerTest {
+    private static final String PATH_COMMENTS = "/comments";
+    private static final String PATH_COMMENT = "/comments/{id}";
 
     @Autowired
     private TestRestTemplate restTemplate;

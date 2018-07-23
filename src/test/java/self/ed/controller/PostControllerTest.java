@@ -1,4 +1,4 @@
-package self.ed.endpoint;
+package self.ed.controller;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,9 +29,9 @@ import static self.ed.testing.support.RandomUtils.random;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class PostEndpointTest {
-    private static final String PATH_POSTS = "/rest/posts";
-    private static final String PATH_POST = "/rest/posts/{id}";
+public class PostControllerTest {
+    private static final String PATH_POSTS = "/posts";
+    private static final String PATH_POST = "/posts/{id}";
 
     @Autowired
     private TestRestTemplate restTemplate;
