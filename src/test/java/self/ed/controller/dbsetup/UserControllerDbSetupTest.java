@@ -47,7 +47,8 @@ public class UserControllerDbSetupTest {
 
     @Before
     public void setUp() {
-        launch(deleteAllFrom("user"));
+        // Deleting all tables because another tests may populated dependent entities
+        launch(deleteAllFrom("comment", "post", "user"));
     }
 
     @Test
