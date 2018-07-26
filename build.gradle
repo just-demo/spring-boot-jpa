@@ -28,6 +28,8 @@ dependencies {
     compile 'io.github.benas:random-beans:3.7.0'
     compile 'org.apache.commons:commons-lang3:3.7'
     compile 'org.postgresql:postgresql:42.2.4'
+    compile 'commons-beanutils:commons-beanutils:1.9.3'
+
 
     testCompile 'com.h2database:h2:1.4.197'
     testCompile 'org.dbunit:dbunit:2.5.4'
