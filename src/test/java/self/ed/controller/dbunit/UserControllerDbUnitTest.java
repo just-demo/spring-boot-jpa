@@ -1,24 +1,35 @@
 package self.ed.controller.dbunit;
 
-import com.github.springtestdbunit.DbUnitTestExecutionListener;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
-import com.github.springtestdbunit.annotation.ExpectedDatabase;
+import org.apache.commons.beanutils.BeanUtils;
+import org.dbunit.Assertion;
+import org.dbunit.database.DatabaseDataSourceConnection;
+import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.Column;
+import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ITable;
+import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import self.ed.entity.User;
-import self.ed.testing.support.EntityHelper;
 
+import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import static com.github.springtestdbunit.assertion.DatabaseAssertionMode.NON_STRICT;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.dbunit.dataset.filter.DefaultColumnFilter.includedColumnsTable;
+import static org.dbunit.operation.DatabaseOperation.CLEAN_INSERT;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
@@ -28,8 +39,6 @@ import static org.springframework.http.HttpStatus.OK;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestExecutionListeners({DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class})
-@DatabaseSetup(value = "user.empty.xml")
 public class UserControllerDbUnitTest {
     private static final String PATH_USERS = "/users";
     private static final String PATH_USER = "/users/{id}";
@@ -38,35 +47,81 @@ public class UserControllerDbUnitTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private EntityHelper entityHelper;
+    private DataSource dataSource;
+
+    private IDatabaseConnection connection;
+
+    @Before
+    public void setUp() throws Exception {
+        this.connection = new DatabaseDataSourceConnection(dataSource);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        connection.close();
+    }
 
     @Test
-    @DatabaseSetup(value = "user.multiple.xml")
-    public void testFindAll() {
+    public void testFindAll() throws Exception {
+        IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.multiple.xml"));
+        CLEAN_INSERT.execute(connection, dataSet);
+
         ResponseEntity<User[]> entity = restTemplate.getForEntity(PATH_USERS, User[].class);
 
         assertThat(entity.getStatusCode()).isEqualTo(OK);
-        List<User> expectedUsers = entityHelper.findAll(User.class);
+
+        List<User> expectedUsers = convertTableToList(dataSet.getTable("user"), User.class);
         assertThat(entity.getBody()).containsOnlyElementsOf(expectedUsers);
     }
 
     @Test
-    @DatabaseSetup(value = "user.multiple.xml")
-    public void testFind() {
+    public void testFind() throws Exception {
+        IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.multiple.xml"));
+        CLEAN_INSERT.execute(connection, dataSet);
+
         ResponseEntity<User> entity = restTemplate.getForEntity(PATH_USER, User.class, 1L);
 
         assertThat(entity.getStatusCode()).isEqualTo(OK);
-        User expectedUser = entityHelper.find(User.class, 1L);
+
+        User expectedUser = convertTableToList(dataSet.getTable("user"), User.class).stream()
+                .filter(user -> user.getId().equals(1L))
+                .findAny()
+                .orElseThrow(RuntimeException::new);
         assertThat(entity.getBody()).isEqualTo(expectedUser);
     }
 
     @Test
-    @ExpectedDatabase(value = "user.single.xml", table = "user", assertionMode = NON_STRICT)
-    public void testCreate() {
+    public void testCreate() throws Exception {
+        IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.empty.xml"));
+        CLEAN_INSERT.execute(connection, dataSet);
         User user = new User();
         user.setName("user1");
+
         ResponseEntity<User> entity = restTemplate.postForEntity(PATH_USERS, user, User.class);
 
         assertThat(entity.getStatusCode()).isEqualTo(CREATED);
+        ITable expectedUsers = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.single.xml")).getTable("user");
+        ITable actualUsers = connection.createDataSet().getTable("user");
+        actualUsers = includedColumnsTable(actualUsers, expectedUsers.getTableMetaData().getColumns());
+        Assertion.assertEquals(expectedUsers, actualUsers);
+    }
+
+    private <T> List<T> convertTableToList(ITable table, Class<T> clazz) throws Exception {
+        List<String> columns = stream(table.getTableMetaData().getColumns())
+                .map(Column::getColumnName)
+                .collect(toList());
+
+        List<T> entities = new ArrayList<>();
+        int rowCount = table.getRowCount();
+        for (int row = 0; row < rowCount; row++) {
+            Map<String, Object> fields = new HashMap<>();
+            for (String column : columns) {
+                fields.put(column, table.getValue(row, column));
+            }
+            T entity = clazz.newInstance();
+            BeanUtils.populate(entity, fields);
+            entities.add(entity);
+        }
+        return entities;
     }
 }
