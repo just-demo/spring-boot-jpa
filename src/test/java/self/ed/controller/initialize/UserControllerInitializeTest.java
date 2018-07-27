@@ -1,37 +1,30 @@
-package self.ed.controller.dbunit;
+package self.ed.controller.initialize;
 
-import com.github.springtestdbunit.DbUnitTestExecutionListener;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
-import com.github.springtestdbunit.annotation.ExpectedDatabase;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import self.ed.entity.User;
 import self.ed.testing.support.EntityHelper;
 
 import java.util.List;
 
-import static com.github.springtestdbunit.assertion.DatabaseAssertionMode.NON_STRICT;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 /**
  * @author Anatolii
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@TestExecutionListeners(listeners = DbUnitTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@DatabaseSetup(value = "user.empty.xml")
-public class UserControllerDbUnitSpringTest {
+@Ignore
+public class UserControllerInitializeTest {
     private static final String PATH_USERS = "/users";
     private static final String PATH_USER = "/users/{id}";
 
@@ -42,7 +35,6 @@ public class UserControllerDbUnitSpringTest {
     private EntityHelper entityHelper;
 
     @Test
-    @DatabaseSetup(value = "user.multiple.xml")
     public void testFindAll() {
         ResponseEntity<User[]> entity = restTemplate.getForEntity(PATH_USERS, User[].class);
 
@@ -52,7 +44,6 @@ public class UserControllerDbUnitSpringTest {
     }
 
     @Test
-    @DatabaseSetup(value = "user.multiple.xml")
     public void testFind() {
         ResponseEntity<User> entity = restTemplate.getForEntity(PATH_USER, User.class, 1L);
 
@@ -62,12 +53,13 @@ public class UserControllerDbUnitSpringTest {
     }
 
     @Test
-    @ExpectedDatabase(value = "user.single.xml", table = "user", assertionMode = NON_STRICT)
     public void testCreate() {
         User user = new User();
-        user.setName("user1");
+        user.setName("user3");
         ResponseEntity<User> entity = restTemplate.postForEntity(PATH_USERS, user, User.class);
 
         assertThat(entity.getStatusCode()).isEqualTo(CREATED);
+        User persisted = entityHelper.find(entity.getBody());
+        assertThat(persisted.getName()).isEqualTo(user.getName());
     }
 }
