@@ -1,4 +1,4 @@
-package self.ed.controller.dbunit;
+package self.ed.repository.dbunit;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -7,21 +7,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import self.ed.entity.User;
+import self.ed.repository.UserRepository;
 import self.ed.testing.support.EntityHelper;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.github.springtestdbunit.assertion.DatabaseAssertionMode.NON_STRICT;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 /**
@@ -31,12 +28,9 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = DbUnitTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
 @DatabaseSetup(value = "user.empty.xml")
-public class UserControllerDbUnitSpringTest {
-    private static final String PATH_USERS = "/users";
-    private static final String PATH_USER = "/users/{id}";
-
+public class UserRepositoryDbUnitSpringTest {
     @Autowired
-    private TestRestTemplate restTemplate;
+    private UserRepository instance;
 
     @Autowired
     private EntityHelper entityHelper;
@@ -44,21 +38,20 @@ public class UserControllerDbUnitSpringTest {
     @Test
     @DatabaseSetup(value = "user.multiple.xml")
     public void testFindAll() {
-        ResponseEntity<User[]> entity = restTemplate.getForEntity(PATH_USERS, User[].class);
+        Iterable<User> actual = instance.findAll();
 
-        assertThat(entity.getStatusCode()).isEqualTo(OK);
-        List<User> expectedUsers = entityHelper.findAll(User.class);
-        assertThat(entity.getBody()).containsOnlyElementsOf(expectedUsers);
+        List<User> expected = entityHelper.findAll(User.class);
+        assertThat(actual).containsOnlyElementsOf(expected);
     }
 
     @Test
     @DatabaseSetup(value = "user.multiple.xml")
     public void testFind() {
-        ResponseEntity<User> entity = restTemplate.getForEntity(PATH_USER, User.class, 1L);
+        Optional<User> found = instance.findById(1L);
 
-        assertThat(entity.getStatusCode()).isEqualTo(OK);
-        User expectedUser = entityHelper.find(User.class, 1L);
-        assertThat(entity.getBody()).isEqualTo(expectedUser);
+        User expected = entityHelper.find(User.class, 1L);
+        assertThat(found.isPresent()).isTrue();
+        assertThat(found.get()).isEqualTo(expected);
     }
 
     @Test
@@ -66,8 +59,7 @@ public class UserControllerDbUnitSpringTest {
     public void testCreate() {
         User user = new User();
         user.setName("user1");
-        ResponseEntity<User> entity = restTemplate.postForEntity(PATH_USERS, user, User.class);
 
-        assertThat(entity.getStatusCode()).isEqualTo(CREATED);
+        instance.save(user);
     }
 }

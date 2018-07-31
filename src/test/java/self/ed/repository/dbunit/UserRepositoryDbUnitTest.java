@@ -1,4 +1,4 @@
-package self.ed.controller.dbunit;
+package self.ed.repository.dbunit;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.dbunit.Assertion;
@@ -14,37 +14,27 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import self.ed.entity.User;
+import self.ed.repository.UserRepository;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.dbunit.dataset.filter.DefaultColumnFilter.includedColumnsTable;
 import static org.dbunit.operation.DatabaseOperation.CLEAN_INSERT;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
 
 /**
  * @author Anatolii
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-public class UserControllerDbUnitTest {
-    private static final String PATH_USERS = "/users";
-    private static final String PATH_USER = "/users/{id}";
-
+@SpringBootTest
+public class UserRepositoryDbUnitTest {
     @Autowired
-    private TestRestTemplate restTemplate;
+    private UserRepository instance;
 
     @Autowired
     private DataSource dataSource;
@@ -66,12 +56,10 @@ public class UserControllerDbUnitTest {
         IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.multiple.xml"));
         CLEAN_INSERT.execute(connection, dataSet);
 
-        ResponseEntity<User[]> entity = restTemplate.getForEntity(PATH_USERS, User[].class);
+        Iterable<User> actual = instance.findAll();
 
-        assertThat(entity.getStatusCode()).isEqualTo(OK);
-
-        List<User> expectedUsers = convertTableToList(dataSet.getTable("user"), User.class);
-        assertThat(entity.getBody()).containsOnlyElementsOf(expectedUsers);
+        List<User> expected = convertTableToList(dataSet.getTable("user"), User.class);
+        assertThat(actual).containsOnlyElementsOf(expected);
     }
 
     @Test
@@ -79,31 +67,29 @@ public class UserControllerDbUnitTest {
         IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.multiple.xml"));
         CLEAN_INSERT.execute(connection, dataSet);
 
-        ResponseEntity<User> entity = restTemplate.getForEntity(PATH_USER, User.class, 1L);
+        Optional<User> found = instance.findById(1L);
 
-        assertThat(entity.getStatusCode()).isEqualTo(OK);
-
-        User expectedUser = convertTableToList(dataSet.getTable("user"), User.class).stream()
+        User expected = convertTableToList(dataSet.getTable("user"), User.class).stream()
                 .filter(user -> user.getId().equals(1L))
                 .findAny()
                 .orElseThrow(RuntimeException::new);
-        assertThat(entity.getBody()).isEqualTo(expectedUser);
+        assertThat(found.isPresent()).isTrue();
+        assertThat(found.get()).isEqualTo(expected);
     }
 
     @Test
-    public void testCreate() throws Exception {
+    public void testSave() throws Exception {
         IDataSet dataSet = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.empty.xml"));
         CLEAN_INSERT.execute(connection, dataSet);
         User user = new User();
         user.setName("user1");
 
-        ResponseEntity<User> entity = restTemplate.postForEntity(PATH_USERS, user, User.class);
+        instance.save(user);
 
-        assertThat(entity.getStatusCode()).isEqualTo(CREATED);
-        ITable expectedUsers = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.single.xml")).getTable("user");
-        ITable actualUsers = connection.createDataSet().getTable("user");
-        actualUsers = includedColumnsTable(actualUsers, expectedUsers.getTableMetaData().getColumns());
-        Assertion.assertEquals(expectedUsers, actualUsers);
+        ITable expected = new FlatXmlDataSetBuilder().build(this.getClass().getResource("user.single.xml")).getTable("user");
+        ITable actual = connection.createDataSet().getTable("user");
+        actual = includedColumnsTable(actual, expected.getTableMetaData().getColumns());
+        Assertion.assertEquals(expected, actual);
     }
 
     private <T> List<T> convertTableToList(ITable table, Class<T> clazz) throws Exception {
