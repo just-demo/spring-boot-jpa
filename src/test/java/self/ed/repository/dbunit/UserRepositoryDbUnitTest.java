@@ -23,7 +23,7 @@ import java.util.*;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.dbunit.dataset.filter.DefaultColumnFilter.includedColumnsTable;
 import static org.dbunit.operation.DatabaseOperation.CLEAN_INSERT;
 
@@ -73,8 +73,7 @@ public class UserRepositoryDbUnitTest {
                 .filter(user -> user.getId().equals(1L))
                 .findAny()
                 .orElseThrow(RuntimeException::new);
-        assertThat(found.isPresent()).isTrue();
-        assertThat(found.get()).isEqualTo(expected);
+        assertThat(found).contains(expected);
     }
 
     @Test

@@ -22,7 +22,7 @@ import static com.ninja_squad.dbsetup.Operations.insertInto;
 import static com.ninja_squad.dbsetup.generator.ValueGenerators.sequence;
 import static com.ninja_squad.dbsetup.generator.ValueGenerators.stringSequence;
 import static com.ninja_squad.dbsetup.operation.CompositeOperation.sequenceOf;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;

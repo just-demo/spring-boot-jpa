@@ -12,8 +12,7 @@ import self.ed.testing.support.EntityFactory;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Anatolii
@@ -37,7 +36,6 @@ public class UserRepositoryTest {
 
         Optional<User> found = instance.findById(user.getId());
 
-        assertTrue(found.isPresent());
-        assertEquals(found.get(), user);
+        assertThat(found).contains(user);
     }
 }

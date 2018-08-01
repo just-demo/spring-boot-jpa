@@ -11,8 +11,7 @@ import self.ed.testing.support.EntityFactory;
 
 import java.util.Optional;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Anatolii
@@ -36,7 +35,6 @@ public class UserRepositoryTest extends AbstractTestNGSpringContextTests {
 
         Optional<User> found = instance.findById(user.getId());
 
-        assertTrue(found.isPresent());
-        assertEquals(found.get(), user);
+        assertThat(found).contains(user);
     }
 }

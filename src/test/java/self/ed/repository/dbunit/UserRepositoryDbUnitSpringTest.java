@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.github.springtestdbunit.assertion.DatabaseAssertionMode.NON_STRICT;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
@@ -50,8 +50,7 @@ public class UserRepositoryDbUnitSpringTest {
         Optional<User> found = instance.findById(1L);
 
         User expected = entityHelper.find(User.class, 1L);
-        assertThat(found.isPresent()).isTrue();
-        assertThat(found.get()).isEqualTo(expected);
+        assertThat(found).contains(expected);
     }
 
     @Test
