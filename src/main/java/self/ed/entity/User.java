@@ -16,6 +16,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
  */
 @Entity
 @NamedQuery(name = "User.findByNameDifferentFrom", query = "select u from User u where u.name <> ?1")
+@NamedEntityGraph(name = "User.posts", attributeNodes = @NamedAttributeNode("posts"))
 public class User {
     @Id
     // Cannot use IDENTITY because of quoted "user": PostgreSQL would try to use an incorrect

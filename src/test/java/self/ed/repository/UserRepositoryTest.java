@@ -17,10 +17,13 @@ import org.springframework.util.concurrent.ListenableFuture;
 import self.ed.entity.Comment;
 import self.ed.entity.Post;
 import self.ed.entity.User;
+import self.ed.entity.projection.IdAndNameConcat;
+import self.ed.entity.projection.NameOnly;
 import self.ed.testing.support.EntityFactory;
 import self.ed.testing.support.EntityHelper;
 
 import javax.persistence.EntityManager;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -509,4 +512,84 @@ public class UserRepositoryTest {
 
         assertThat(result).isEqualTo(user);
     }
+
+    @Test
+    public void countWithSpEL() {
+        entityFactory.createUser();
+
+        long count = instance.countWithSpEL();
+
+        assertThat(count).isEqualTo(entityHelper.findAll(User.class).size());
+    }
+
+    @Test
+    public void updateNameWithQuery() {
+        User user = entityFactory.createUser();
+        String targetName = random(String.class);
+
+        int updated = instance.updateNameWithQuery(user.getName(), targetName);
+
+        assertThat(updated).isEqualTo(1);
+        assertThat(entityHelper.find(user).getName()).isEqualTo(targetName);
+    }
+
+    @Test
+    public void deleteByNameWithQuery() {
+        User user = entityFactory.createUser();
+
+        instance.deleteByNameWithQuery(user.getName());
+
+        assertThat(entityHelper.find(user)).isNull();
+    }
+
+    @Test
+    public void findTopByName_EntityGraph() {
+        User user = entityFactory.createUser();
+        Post post = entityFactory.createPost(user);
+
+        User found = instance.findTopByName(user.getName());
+
+        // Make sure no lazy initialization error thrown
+        assertThat(found.getPosts()).containsExactly(post);
+    }
+
+    @Test
+    public void findFirstByName_EntityGraph() {
+        User user = entityFactory.createUser();
+        Post post = entityFactory.createPost(user);
+
+        User found = instance.findFirstByName(user.getName());
+
+        // Make sure no lazy initialization error thrown
+        assertThat(found.getPosts()).containsExactly(post);
+    }
+
+    @Test
+    public void findByIdIn_Projection() {
+        User user = entityFactory.createUser();
+
+        List<NameOnly> found = instance.findByIdIn(user.getId());
+
+        assertThat(found).size().isEqualTo(1);
+        assertThat(found.iterator().next().getName()).isEqualTo(user.getName());
+    }
+
+    @Test
+    public void findByNameIn_Projection() {
+        User user = entityFactory.createUser();
+
+        List<IdAndNameConcat> found = instance.findByNameIn(user.getName());
+
+        assertThat(found).size().isEqualTo(1);
+        assertThat(found.iterator().next().getIdAndName()).isEqualTo(user.getId() + " " + user.getName());
+    }
+
+    @Test
+    public void findTopById_Projection() {
+        User user = entityFactory.createUser();
+
+        Collection<NameOnly> found = instance.findTopById(user.getId(), NameOnly.class);
+
+        assertThat(found).size().isEqualTo(1);
+        assertThat(found.iterator().next().getName()).isEqualTo(user.getName());    }
 }
