@@ -9,18 +9,27 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
+import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
 import self.ed.entity.Comment;
 import self.ed.entity.Post;
 import self.ed.entity.User;
 import self.ed.testing.support.EntityFactory;
 import self.ed.testing.support.EntityHelper;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static self.ed.testing.support.RandomUtils.random;
@@ -33,6 +42,9 @@ import static self.ed.testing.support.RandomUtils.random;
 public class UserRepositoryTest {
     @Autowired
     private UserRepository instance;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Autowired
     private EntityHelper entityHelper;
@@ -373,5 +385,72 @@ public class UserRepositoryTest {
         List<User> found = instance.findFirst3ByIdBetween(Long.MIN_VALUE, Long.MAX_VALUE);
 
         assertThat(found).size().isEqualTo(3);
+    }
+
+    @Test
+    @Transactional
+    public void findWithCustomQueryAndStream() {
+        IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
+
+        Stream<User> found = instance.findWithCustomQueryAndStream();
+
+        List<User> expected = entityHelper.findAll(User.class);
+        assertThat(found).containsOnlyElementsOf(expected);
+    }
+
+    @Test
+    public void findWithCustomQueryAndPage() {
+        IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
+
+        List<User> found = instance.findWithCustomQueryAndPage(PageRequest.of(0, 1));
+
+        assertThat(found).size().isEqualTo(1);
+    }
+
+    @Test
+    public void findByName() throws Exception {
+        User user = entityFactory.createUser();
+
+        Future<User> found = instance.findByName(user.getName());
+
+        assertThat(found.get(1, SECONDS)).isEqualTo(user);
+    }
+
+    @Test
+    public void findOneById() throws Exception {
+        User user = entityFactory.createUser();
+
+        CompletableFuture<User> found = instance.findOneById(user.getId());
+
+        assertThat(found.get(1, SECONDS)).isEqualTo(user);
+    }
+
+    @Test
+    public void findOneByName() throws Exception {
+        User user = entityFactory.createUser();
+
+        ListenableFuture<User> found = instance.findOneByName(user.getName());
+
+        assertThat(found.get(1, SECONDS)).isEqualTo(user);
+    }
+
+    @Test
+    public void findById_StandaloneUsage() {
+        RepositoryFactorySupport factory = new JpaRepositoryFactory(entityManager);
+        UserRepository instance = factory.getRepository(UserRepository.class);
+        User user = entityFactory.createUser();
+
+        Optional<User> found = instance.findById(user.getId());
+
+        assertThat(found).contains(user);
+    }
+
+    @Test
+    public void customMethod() {
+        User user = entityFactory.createUser();
+
+        User result = instance.customMethod(user);
+
+        assertThat(result).isEqualTo(user);
     }
 }
