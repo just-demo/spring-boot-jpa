@@ -16,10 +16,8 @@ import self.ed.entity.User;
 import self.ed.testing.support.EntityFactory;
 import self.ed.testing.support.EntityHelper;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Comparator.comparing;
@@ -43,7 +41,7 @@ public class UserRepositoryTest {
     private EntityFactory entityFactory;
 
     @Test
-    public void testFindAll() {
+    public void findAll() {
         IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
 
         Iterable<User> found = instance.findAll();
@@ -53,7 +51,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFind() {
+    public void find() {
         User user = entityFactory.createUser();
 
         Optional<User> found = instance.findById(user.getId());
@@ -62,14 +60,14 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFind_NotFound() {
+    public void find_NotFound() {
         Optional<User> found = instance.findById(Long.MAX_VALUE);
 
         assertThat(found).isEmpty();
     }
 
     @Test
-    public void testCreate() {
+    public void create() {
         User user = random(User.class, "id");
 
         User returned = instance.save(user);
@@ -80,7 +78,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testUpdate() {
+    public void update() {
         User user = entityFactory.createUser();
         user.setName(random(String.class));
 
@@ -92,7 +90,7 @@ public class UserRepositoryTest {
 
     @Test(expected = Exception.class)
     @Ignore
-    public void testUpdate_NotFound() {
+    public void update_NotFound() {
         User user = random(User.class);
         user.setId(Long.MAX_VALUE);
 
@@ -100,7 +98,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testDelete() {
+    public void delete() {
         User user = entityFactory.createUser();
 
         instance.delete(user);
@@ -109,7 +107,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testDelete_WithPosts() {
+    public void delete_WithPosts() {
         User user = entityFactory.createUser();
         Post post = entityFactory.createPost(user);
 
@@ -121,7 +119,7 @@ public class UserRepositoryTest {
 
     @Test
     @Ignore
-    public void testDelete_WithComments() {
+    public void delete_WithComments() {
         User user = entityFactory.createUser();
         Comment comment = entityFactory.createComment(user);
 
@@ -133,7 +131,7 @@ public class UserRepositoryTest {
 
     @Test(expected = Exception.class)
     @Ignore
-    public void testDelete_NotFound() {
+    public void delete_NotFound() {
         User user = random(User.class);
         user.setId(Long.MAX_VALUE);
 
@@ -141,7 +139,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testDeleteById() {
+    public void deleteById() {
         User user = entityFactory.createUser();
 
         instance.deleteById(user.getId());
@@ -150,12 +148,12 @@ public class UserRepositoryTest {
     }
 
     @Test(expected = EmptyResultDataAccessException.class)
-    public void testDeleteById_NotFound() {
+    public void deleteById_NotFound() {
         instance.deleteById(Long.MAX_VALUE);
     }
 
     @Test
-    public void testDeleteById_WithComments() {
+    public void deleteById_WithComments() {
         User user = entityFactory.createUser();
         Comment comment = entityFactory.createComment(user);
 
@@ -166,7 +164,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFindAll_Page() {
+    public void findAll_Page() {
         IntStream.range(0, 3 * 5).forEach(i -> entityFactory.createUser());
 
         Page<User> page = instance.findAll(PageRequest.of(1, 5));
@@ -178,7 +176,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFindAll_Sort() {
+    public void findAll_Sort() {
         IntStream.range(0, 3 * 5).forEach(i -> entityFactory.createUser());
 
         Iterable<User> actual = instance.findAll(Sort.by("id"));
@@ -190,7 +188,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFindAll_SortAndPage() {
+    public void findAll_SortAndPage() {
         IntStream.range(0, 3 * 5).forEach(i -> entityFactory.createUser());
 
         Page<User> page = instance.findAll(PageRequest.of(1, 5, Sort.by("id")));
@@ -207,7 +205,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFindAllByName_Page() {
+    public void findAllByName_Page() {
         IntStream.range(0, 3 * 5).forEach(i -> entityFactory.createUser());
         User user = entityFactory.createUser();
 
@@ -219,7 +217,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testFindAllByNameIn() {
+    public void findAllByNameIn() {
         IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
         List<User> searchUsers = IntStream.range(0, 3)
                 .mapToObj(i -> entityFactory.createUser())
@@ -234,7 +232,19 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testCountByName() {
+    public void findAllByNameIn_Pageable() {
+        List<String> searchNames = IntStream.range(0, 3)
+                .mapToObj(i -> entityFactory.createUser())
+                .map(User::getName)
+                .collect(toList());
+
+        List<User> found = instance.findAllByNameIn(searchNames, PageRequest.of(0, 2));
+
+        assertThat(found).size().isEqualTo(2);
+    }
+
+    @Test
+    public void countByName() {
         IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
         User user = entityFactory.createUser();
 
@@ -244,7 +254,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testDeleteByName() {
+    public void deleteByName() {
         User user = entityFactory.createUser();
 
         long deleted = instance.deleteByName(user.getName());
@@ -253,14 +263,14 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testDeleteByName_NoMatches() {
+    public void deleteByName_NoMatches() {
         long deleted = instance.deleteByName(random(String.class));
 
         assertThat(deleted).isEqualTo(0);
     }
 
     @Test
-    public void testRemoveByName() {
+    public void removeByName() {
         User user = entityFactory.createUser();
 
         List<User> removed = instance.removeByName(user.getName());
@@ -269,10 +279,99 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void testRemoveByName_NoMatches() {
+    public void removeByName_NoMatches() {
         List<User> removed = instance.removeByName(random(String.class));
 
         assertThat(removed).isEmpty();
     }
 
+    @Test
+    public void getByName() {
+        User user = entityFactory.createUser();
+
+        User found = instance.getByName(user.getName());
+
+        assertThat(found).isEqualTo(user);
+    }
+
+    @Test
+    public void getByName_NotFound() {
+        User found = instance.getByName(random(String.class));
+
+        assertThat(found).isNull();
+    }
+
+    @Test
+    public void getById() {
+        User user = entityFactory.createUser();
+
+        User found = instance.getById(user.getId());
+
+        assertThat(found).isEqualTo(user);
+    }
+
+    @Ignore
+    @Test(expected = EmptyResultDataAccessException.class)
+    public void getById_NotFound() {
+        instance.getById(Long.MAX_VALUE);
+    }
+
+    @Test
+    public void findDistinctByIdOrNameIgnoreCaseOrderByIdDesc() {
+        User user1 = entityFactory.createUser();
+        User user2 = entityFactory.createUser();
+
+        List<User> found = instance.findDistinctByIdOrNameIgnoreCaseOrderByIdDesc(user1.getId(), user2.getName().toUpperCase());
+
+        assertThat(found).containsExactly(user2, user1);
+    }
+
+    @Test
+    public void findByNameLike() {
+        User user = entityFactory.createUser();
+
+        List<User> found = instance.findByNameLike("%" + user.getName().substring(1, 9) + "%");
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByPostsCommentsBody() {
+        Comment comment = entityFactory.createComment();
+        User user = comment.getPost().getAuthor();
+
+        List<User> found = instance.findByPostsCommentsBody(comment.getBody());
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByPosts_Comments_Body() {
+        Comment comment = entityFactory.createComment();
+        User user = comment.getPost().getAuthor();
+
+        List<User> found = instance.findByPosts_Comments_Body(comment.getBody());
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByIdBetween() {
+        List<User> users = IntStream.range(0, 10)
+                .mapToObj(i -> entityFactory.createUser())
+                .collect(toList());
+
+        List<User> found = instance.findByIdBetween(users.get(0).getId(), users.get(2).getId());
+
+        assertThat(found).containsExactlyInAnyOrderElementsOf(users.subList(0, 3));
+    }
+
+    @Test
+    public void findFirst3ByIdBetween() {
+        IntStream.range(0, 10).forEach(i -> entityFactory.createUser());
+
+        List<User> found = instance.findFirst3ByIdBetween(Long.MIN_VALUE, Long.MAX_VALUE);
+
+        assertThat(found).size().isEqualTo(3);
+    }
 }
