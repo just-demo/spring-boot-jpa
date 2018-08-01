@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * @author Anatolii
  */
-public interface UserRepository extends PagingAndSortingRepository<User, Long>, CustomUserRepository {
+public interface UserRepository extends PagingAndSortingRepository<User, Long>, CustomRepository<User> {
     Page<User> findAllByName(String name, Pageable pageable);
 
     List<User> findAllByNameIn(Collection<String> names);

@@ -33,6 +33,7 @@ import static self.ed.testing.support.RandomUtils.random;
 public class UserControllerTest {
     private static final String PATH_USERS = "/users";
     private static final String PATH_USER = "/users/{id}";
+    private static final String PATH_USERS_PAGE = "/users/page";
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -171,5 +172,15 @@ public class UserControllerTest {
         ResponseEntity<String> entity = restTemplate.exchange(PATH_USER, DELETE, EMPTY, String.class, Long.MAX_VALUE);
 
         assertThat(entity.getStatusCode()).isEqualTo(NOT_FOUND);
+    }
+
+    @Test
+    public void testFindAllPage() {
+        IntStream.range(0, 3).forEach(i -> entityFactory.createUser());
+
+        ResponseEntity<String> entity = restTemplate.getForEntity(PATH_USERS_PAGE, String.class);
+
+        assertThat(entity.getStatusCode()).isEqualTo(OK);
+        assertThat(entity.getBody()).isNotEmpty();
     }
 }
