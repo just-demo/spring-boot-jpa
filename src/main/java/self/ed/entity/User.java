@@ -9,13 +9,13 @@ import java.util.Objects;
 
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
-import static javax.persistence.GenerationType.IDENTITY;
 import static javax.persistence.GenerationType.SEQUENCE;
 
 /**
  * @author Anatolii
  */
 @Entity
+@NamedQuery(name = "User.findByNameDifferentFrom", query = "select u from User u where u.name <> ?1")
 public class User {
     @Id
     // Cannot use IDENTITY because of quoted "user": PostgreSQL would try to use an incorrect

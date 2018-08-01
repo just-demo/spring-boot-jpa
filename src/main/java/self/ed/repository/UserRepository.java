@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -42,6 +43,8 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
 
     List<User> findByNameLike(String name);
 
+    List<User> findByNameContaining(String name);
+
     List<User> findByPostsCommentsBody(String body);
 
     List<User> findByPosts_Comments_Body(String body);
@@ -56,6 +59,22 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     @Query("select u from User u")
     List<User> findWithCustomQueryAndPage(Pageable pageable);
 
+    @Query("select u from User u where name = ?1")
+    List<User> findByNameQuery(String name);
+
+    @Query("select u from User u where name = :name")
+    List<User> findByNameQueryNamed(@Param("name") String name);
+
+    @Query(value = "select * from user where name = ?1", nativeQuery = true)
+    List<User> findByNameNative(String name);
+
+    @Query(value = "select * from user where name = ?1",
+            countQuery = "select count(*) from user where name = ?1",
+            nativeQuery = true)
+    Page<User> findByNameNativePage(String name, Pageable pageable);
+
+    // Uses named query
+    List<User> findByNameDifferentFrom(String name);
 
     //@Async
     Future<User> findByName(String name);

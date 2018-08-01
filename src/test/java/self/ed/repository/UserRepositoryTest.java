@@ -348,6 +348,15 @@ public class UserRepositoryTest {
     }
 
     @Test
+    public void findByNameContaining() {
+        User user = entityFactory.createUser();
+
+        List<User> found = instance.findByNameContaining(user.getName().substring(1, 9));
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
     public void findByPostsCommentsBody() {
         Comment comment = entityFactory.createComment();
         User user = comment.getPost().getAuthor();
@@ -405,6 +414,52 @@ public class UserRepositoryTest {
         List<User> found = instance.findWithCustomQueryAndPage(PageRequest.of(0, 1));
 
         assertThat(found).size().isEqualTo(1);
+    }
+
+    @Test
+    public void findByNameQuery() {
+        User user = entityFactory.createUser();
+
+        List<User> found = instance.findByNameQuery(user.getName());
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByNameQueryNamed() {
+        User user = entityFactory.createUser();
+
+        List<User> found = instance.findByNameQueryNamed(user.getName());
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByNameNative() {
+        User user = entityFactory.createUser();
+
+        List<User> found = instance.findByNameNative(user.getName());
+
+        assertThat(found).containsExactly(user);
+    }
+
+    @Test
+    public void findByNameNativePage() {
+        User user = entityFactory.createUser();
+
+        Page<User> found = instance.findByNameNativePage(user.getName(), PageRequest.of(0, 1));
+
+        assertThat(found.getContent()).containsExactly(user);
+    }
+
+    @Test
+    public void findByNameDifferentFrom() {
+        User include = entityFactory.createUser();
+        User exclude = entityFactory.createUser();
+
+        List<User> found = instance.findByNameDifferentFrom(exclude.getName());
+
+        assertThat(found).contains(include).doesNotContain(exclude);
     }
 
     @Test
