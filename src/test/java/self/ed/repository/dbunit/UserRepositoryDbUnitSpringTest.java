@@ -2,7 +2,9 @@ package self.ed.repository.dbunit;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
+import com.github.springtestdbunit.annotation.DbUnitConfiguration;
 import com.github.springtestdbunit.annotation.ExpectedDatabase;
+import com.github.springtestdbunit.dataset.ReplacementDataSetLoader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @TestExecutionListeners(listeners = DbUnitTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
 @DatabaseSetup(value = "user.empty.xml")
+@DbUnitConfiguration(dataSetLoader = ReplacementDataSetLoader.class)
 public class UserRepositoryDbUnitSpringTest {
     @Autowired
     private UserRepository instance;
