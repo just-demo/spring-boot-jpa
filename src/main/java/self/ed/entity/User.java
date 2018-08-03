@@ -2,8 +2,12 @@ package self.ed.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,6 +19,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
  * @author Anatolii
  */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @NamedQuery(name = "User.findByNameDifferentFrom", query = "select u from User u where u.name <> ?1")
 @NamedEntityGraph(name = "User.posts", attributeNodes = @NamedAttributeNode("posts"))
 public class User {
@@ -25,6 +30,12 @@ public class User {
     @SequenceGenerator(name = "user_id_seq", sequenceName = "user_id_seq")
     private Long id;
     private String name;
+
+    @CreatedBy
+    private String createdBy;
+
+    @CreatedDate
+    private Date createdDate;
 
     @JsonIgnore
     @OneToMany(mappedBy = "author", fetch = LAZY, cascade = ALL)
@@ -64,6 +75,22 @@ public class User {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 
     @Override
