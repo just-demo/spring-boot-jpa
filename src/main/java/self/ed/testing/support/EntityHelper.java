@@ -73,7 +73,7 @@ public class EntityHelper {
         entityManager.remove(entity);
     }
 
-    public void removeAll(Class<?> clazz) {
+    public <T> void removeAll(Class<T> clazz) {
         removeAll(clazz, emptyMap());
     }
 

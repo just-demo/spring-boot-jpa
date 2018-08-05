@@ -93,6 +93,20 @@ public class UserRepositoryTest {
     }
 
     @Test
+    public void create_Audit() {
+        User user = random(User.class, "id", "createdBy", "createdDate");
+
+        User returned = instance.save(user);
+
+        assertThat(returned).isEqualToIgnoringGivenFields(user, "id", "createdBy", "createdDate");
+        assertThat(returned.getId()).isNotNull();
+        User persisted = entityHelper.find(returned);
+        assertThat(persisted).isEqualTo(returned);
+        assertThat(persisted.getCreatedBy()).isNotNull();
+        assertThat(persisted.getCreatedDate()).isNotNull();
+    }
+
+    @Test
     public void update() {
         User user = entityFactory.createUser();
         user.setName(random(String.class));
@@ -591,5 +605,6 @@ public class UserRepositoryTest {
         Collection<NameOnly> found = instance.findTopById(user.getId(), NameOnly.class);
 
         assertThat(found).size().isEqualTo(1);
-        assertThat(found.iterator().next().getName()).isEqualTo(user.getName());    }
+        assertThat(found.iterator().next().getName()).isEqualTo(user.getName());
+    }
 }
