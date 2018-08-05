@@ -3,31 +3,22 @@ package self.ed.testing.support;
 import io.github.benas.randombeans.EnhancedRandomBuilder;
 import io.github.benas.randombeans.api.EnhancedRandom;
 import io.github.benas.randombeans.api.Randomizer;
+import io.github.benas.randombeans.randomizers.text.StringRandomizer;
 
 import java.util.Random;
 
-import static io.github.benas.randombeans.randomizers.text.StringRandomizer.aNewStringRandomizer;
+import static java.lang.Math.abs;
 
-/**
- * @author Anatolii
- */
 public class RandomUtils {
-    private static final EnhancedRandom ENHANCED_RANDOM = enhancedRandom();
+    private static final Random RANDOM = new Random();
+    private static final EnhancedRandom ENHANCED_RANDOM = new EnhancedRandomBuilder()
+            .randomize(Integer.class, (Randomizer<Integer>) () -> abs(RANDOM.nextInt()))
+            .randomize(Long.class, (Randomizer<Long>) () -> abs(RANDOM.nextLong()))
+            .randomize(String.class, StringRandomizer.aNewStringRandomizer(10, 10, 0))
+            .collectionSizeRange(0, 0)
+            .build();
 
     public static <T> T random(Class<T> type, String... excludedFields) {
         return ENHANCED_RANDOM.nextObject(type, excludedFields);
-    }
-
-    private static EnhancedRandom enhancedRandom() {
-        Random random = new Random();
-        Randomizer<Integer> positiveIntegerRandomizer = () -> Math.abs(random.nextInt());
-        Randomizer<Long> positiveLongRandomizer = () -> Math.abs(random.nextLong());
-        Randomizer<String> fixedWidthStringRandomizer = aNewStringRandomizer(10, 10, 0);
-        return new EnhancedRandomBuilder()
-                .randomize(Integer.class, positiveIntegerRandomizer)
-                .randomize(Long.class, positiveLongRandomizer)
-                .randomize(String.class, fixedWidthStringRandomizer)
-                .collectionSizeRange(0, 0)
-                .build();
     }
 }
