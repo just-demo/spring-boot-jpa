@@ -36,6 +36,7 @@ dependencies {
     compile 'commons-beanutils:commons-beanutils:1.9.3'
     compile 'org.springframework.hateoas:spring-hateoas:0.25.0.RELEASE'
 
+    compile("org.springframework.boot:spring-boot-devtools")
     compile('de.codecentric:spring-boot-admin-starter-client')
     compile('de.codecentric:spring-boot-admin-starter-server')
 
