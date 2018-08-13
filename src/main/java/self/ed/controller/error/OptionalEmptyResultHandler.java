@@ -12,9 +12,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import java.util.Optional;
 
 @ControllerAdvice
-public class OptionalResultHandler implements ResponseBodyAdvice<Optional<?>> {
+public class OptionalEmptyResultHandler implements ResponseBodyAdvice<Optional<?>> {
     @Override
-    public boolean supports(MethodParameter returnType, Class converterType) {
+    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
         return returnType.getParameterType().equals(Optional.class);
     }
 

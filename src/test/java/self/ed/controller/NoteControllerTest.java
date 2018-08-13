@@ -60,7 +60,7 @@ public class NoteControllerTest {
     }
 
     @Test
-    @Ignore // TODO: fix
+//    @Ignore // TODO: fix
     public void testFind_NotFound() {
         webTestClient.get().uri(PATH_NOTE, UUIDs.timeBased())
                 .exchange()
