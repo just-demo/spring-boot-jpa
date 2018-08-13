@@ -16,7 +16,6 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 import static self.ed.testing.support.RandomUtils.random;
 
 /**
@@ -42,7 +41,6 @@ public class NoteControllerTest {
         webTestClient.get().uri(PATH_NOTES)
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().contentType(APPLICATION_JSON_UTF8)
                 .expectBodyList(Note.class)
                 .contains(note);
     }
@@ -54,13 +52,11 @@ public class NoteControllerTest {
         webTestClient.get().uri(PATH_NOTE, note.getId())
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().contentType(APPLICATION_JSON_UTF8)
                 .expectBody(Note.class)
                 .isEqualTo(note);
     }
 
     @Test
-//    @Ignore // TODO: fix
     public void testFind_NotFound() {
         webTestClient.get().uri(PATH_NOTE, UUIDs.timeBased())
                 .exchange()
