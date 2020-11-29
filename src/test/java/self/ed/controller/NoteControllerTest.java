@@ -1,18 +1,16 @@
 package self.ed.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import self.ed.entity.Note;
 import self.ed.repository.NoteRepository;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -33,6 +31,9 @@ public class NoteControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Test
     public void testFindAll() {
@@ -58,7 +59,7 @@ public class NoteControllerTest {
 
     @Test
     public void testFind_NotFound() {
-        webTestClient.get().uri(PATH_NOTE, UUIDs.timeBased())
+        webTestClient.get().uri(PATH_NOTE, random(String.class))
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -68,7 +69,7 @@ public class NoteControllerTest {
         Note note = random(Note.class, "id");
 
         Note returned = webTestClient.post().uri(PATH_NOTES)
-                .syncBody(note)
+                .bodyValue(note)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(Note.class)
@@ -86,11 +87,11 @@ public class NoteControllerTest {
         note.setBody(random(String.class));
 
         webTestClient.put().uri(PATH_NOTE, note.getId())
-                .syncBody(note)
+                .bodyValue(note)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.id").isEqualTo(note.getId().toString())
+                .jsonPath("$.id").isEqualTo(note.getId())
                 .jsonPath("$.body").isEqualTo(note.getBody());
 
         Note persisted = find(note);
@@ -102,7 +103,7 @@ public class NoteControllerTest {
         Note note = random(Note.class);
 
         webTestClient.put().uri(PATH_NOTE, note.getId())
-                .syncBody(note)
+                .bodyValue(note)
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -121,19 +122,17 @@ public class NoteControllerTest {
     @Test
     @Ignore // TODO: fix
     public void testDelete_NotFound() {
-        webTestClient.delete().uri(PATH_NOTE, UUIDs.timeBased())
+        webTestClient.delete().uri(PATH_NOTE, random(String.class))
                 .exchange()
                 .expectStatus().isNotFound();
     }
 
     private Note createNote() {
-        Note note = random(Note.class);
-        // TODO: don't reuse production code for data preparation, consider using cassandraTemplate instead
-        return noteRepository.save(note).block(Duration.ofSeconds(5));
+        Note note = random(Note.class, "id");
+        return mongoTemplate.save(note);
     }
 
     private Note find(Note note) {
-        // TODO: don't reuse production code for data preparation, consider using cassandraTemplate instead
-        return noteRepository.findById(note.getId()).block(Duration.ofSeconds(5));
+        return mongoTemplate.findById(note.getId(), Note.class);
     }
 }

@@ -1,16 +1,15 @@
 package self.ed.entity;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.springframework.data.cassandra.core.mapping.PrimaryKey;
-import org.springframework.data.cassandra.core.mapping.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Objects;
-import java.util.UUID;
 
-@Table
+@Document
 public class Note {
-    @PrimaryKey
-    private UUID id;
+    @Id
+    private String id;
     private String body;
 
     public Note() {
@@ -20,11 +19,11 @@ public class Note {
         this.body = body;
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -5,8 +5,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,8 +60,8 @@ public class UserController {
     }
 
     @GetMapping("/page")
-    HttpEntity<PagedResources<Resource<User>>> getAllPage(Pageable pageable, PagedResourcesAssembler<User> assembler) {
+    HttpEntity<PagedModel<EntityModel<User>>> getAllPage(Pageable pageable, PagedResourcesAssembler<User> assembler) {
         Page<User> users = userRepository.findAll(pageable);
-        return new ResponseEntity<>(assembler.toResource(users), OK);
+        return new ResponseEntity<>(assembler.toModel(users), OK);
     }
 }

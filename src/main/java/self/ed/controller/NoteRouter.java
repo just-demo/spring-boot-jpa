@@ -1,6 +1,5 @@
 package self.ed.controller;
 
-import com.datastax.driver.core.utils.UUIDs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -10,10 +9,8 @@ import reactor.core.publisher.Mono;
 import self.ed.entity.Note;
 import self.ed.repository.NoteRepository;
 
-import java.util.UUID;
-
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.BodyInserters.fromObject;
+import static org.springframework.web.reactive.function.BodyInserters.fromValue;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -42,36 +39,34 @@ public class NoteRouter {
     }
 
     private Mono<ServerResponse> get(ServerRequest request) {
-        UUID id = UUID.fromString(request.pathVariable("id"));
+        String id = request.pathVariable("id");
         return noteRepository.findById(id)
-                .flatMap(note -> ok().contentType(APPLICATION_JSON).body(fromObject(note)))
+                .flatMap(note -> ok().contentType(APPLICATION_JSON).body(fromValue(note)))
                 .switchIfEmpty(notFound().build());
     }
 
     private Mono<ServerResponse> create(ServerRequest request) {
-        UUID id = UUIDs.timeBased();
         return request.bodyToMono(Note.class)
-                .flatMap(note -> {
-                    note.setId(id);
-                    return noteRepository.save(note);
-                })
-                .flatMap(note -> created(fromPath("/notes/" + id).build().toUri()).contentType(APPLICATION_JSON).body(fromObject(note)));
+                .flatMap(note -> noteRepository.save(note))
+                .flatMap(note -> created(fromPath("/notes/" + note.getId()).build().toUri())
+                        .contentType(APPLICATION_JSON)
+                        .body(fromValue(note)));
     }
 
     private Mono<ServerResponse> update(ServerRequest request) {
-        UUID id = UUID.fromString(request.pathVariable("id"));
+        String id = request.pathVariable("id");
         return noteRepository.existsById(id)
                 .filter(exists -> exists)
                 .flatMap(ignored -> request.bodyToMono(Note.class).flatMap(note -> {
                     note.setId(id);
                     return noteRepository.save(note);
                 }))
-                .flatMap(note -> ok().contentType(APPLICATION_JSON).body(fromObject(note)))
+                .flatMap(note -> ok().contentType(APPLICATION_JSON).body(fromValue(note)))
                 .switchIfEmpty(notFound().build());
     }
 
     private Mono<ServerResponse> delete(ServerRequest request) {
-        UUID id = UUID.fromString(request.pathVariable("id"));
+        String id = request.pathVariable("id");
         return noteRepository
                 .findById(id)
                 .flatMap(note -> noContent().build(noteRepository.delete(note)))

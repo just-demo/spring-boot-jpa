@@ -1,25 +1,33 @@
+// docker run -d -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres postgres
+// docker run -d -p 27017:27017 --name mongo mongo
+cd db
+docker-compose up
+
+// There is no need to run the scripts below because Hibernate will create everything on startup
 drop table "user";
 drop table post;
 drop table comment;
 
 create table "user" (
-	id bigserial not null,
+	id bigint not null,
 	"name" varchar(255),
-	constraint pk_user primary key (id)
+	created_by varchar(255),
+	created_date timestamp,
+	constraint user_pkey primary key (id)
 );
 
 create table post (
-	id bigserial not null,
+	id bigint not null,
 	title varchar(255),
 	body varchar(255),
 	user_id bigint,
-	constraint pk_post primary key (id)
+	constraint post_pkey primary key (id)
 );
 
 create table comment (
-	id bigserial not null,
+	id bigint not null,
 	body varchar(255),
 	post_id bigint,
 	user_id bigint,
-	constraint pk_comment primary key (id)
+	constraint comment_pkey primary key (id)
 );
